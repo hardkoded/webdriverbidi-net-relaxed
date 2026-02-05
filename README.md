@@ -1,15 +1,15 @@
-# webdriverbidi-net
+# webdriverbidi-net-relaxed
 A .NET client library for the WebDriver BiDi protocol
 
-![Unit tests](https://github.com/webdriverbidi-net/webdriverbidi-net/actions/workflows/dotnet.yml/badge.svg)
-[![Coverage Status](https://coveralls.io/repos/github/webdriverbidi-net/webdriverbidi-net/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/webdriverbidi-net/webdriverbidi-net?branch=main)
-[![NuGet Version](https://img.shields.io/nuget/v/WebDriverBiDi)](https://www.nuget.org/packages/WebDriverBiDi)
+![Unit tests](https://github.com/hardkoded/webdriverbidi-net-relaxed/actions/workflows/dotnet.yml/badge.svg)
+[![Coverage Status](https://coveralls.io/repos/github/hardkoded/webdriverbidi-net-relaxed/badge.svg?branch=main&kill_cache=1)](https://coveralls.io/github/hardkoded/webdriverbidi-net-relaxed?branch=main)
+[![NuGet Version](https://img.shields.io/nuget/v/WebDriverBiDi-Relaxed)](https://www.nuget.org/packages/WebDriverBiDi-Relaxed)
 
 
 This is repository contains a library that is a .NET client for the
 [WebDriver BiDi protocol specification](https://w3c.github.io/webdriver-bidi/). This spec is in progress,
 and features are added to the library as the specification changes. This package is also 
-[published to NuGet](https://www.nuget.org/packages/WebDriverBiDi).
+[published to NuGet](https://www.nuget.org/packages/WebDriverBiDi-Relaxed).
 
 This library also includes support for other modules implementing support for the WebDriver BiDi protocol,
 but not included in that specification. The other specifications which have WebDriver BiDi support that are
@@ -97,10 +97,10 @@ The project has enabled Roslyn analyzers to help with code quality, and uses the
 PRs should contain no warnings from any of the analyzers. Use of warning suppression in the source code
 is mostly prohibited, and will only be allowed on a very strictly reviewed case-by-case basis.
 
-The project uses [GitHub Actions](https://github.com/webdriverbidi-net/webdriverbidi-net/actions) for continuous
+The project uses [GitHub Actions](https://github.com/hardkoded/webdriverbidi-net-relaxed/actions) for continuous
 integration (CI). Code coverage statistics are generated and gathered by
 [Coverlet](https://www.nuget.org/packages/coverlet.collector/), and uploaded to
-[coveralls.io](https://coveralls.io/github/webdriverbidi-net/webdriverbidi-net?branch=main). PRs for which
+[coveralls.io](https://coveralls.io/github/hardkoded/webdriverbidi-net-relaxed?branch=main). PRs for which
 the code coverage drops from the current percentage on the `main` branch will need to be carefully
 reviewed. For convenience, a task has been configured to collect code coverage statistics when the
 tests are executed, so to run code coverage locally, you can run the test task from the Command
@@ -113,7 +113,7 @@ This plugin allows visualization of code coverage directly within the IDE.
 
 ## Documentation
 The project includes documentation, in the `docs` directory. The documentation is published
-to the [GitHub Pages site for this project](https://webdriverbidi-net.github.io/webdriverbidi-net).
+to the [GitHub Pages site for this project](https://hardkoded.github.io/webdriverbidi-net-relaxed).
 Documentation is built and maintained with [DocFx](https://dotnet.github.io/docfx/), the .NET
 documentation framework. To build the documentation, you will need to install the DocFx tooling
 using the following command:
