@@ -258,5 +258,5 @@ Now that you have a working WebDriverBiDi.NET-Relaxed application, explore these
 
 - [WebDriver BiDi Specification](https://w3c.github.io/webdriver-bidi/)
 - [GitHub Repository](https://github.com/hardkoded/webdriverbidi-net-relaxed)
-- [NuGet Package](https://www.nuget.org/packages/WebDriverBiDi)
+- [NuGet Package](https://www.nuget.org/packages/WebDriverBiDi-Relaxed)
 

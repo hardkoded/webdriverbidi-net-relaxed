@@ -137,4 +137,4 @@ Our friendly mascot Winston, the WebDriver BiDi wolf, is here to guide you on yo
 ---
 
 **License**: MIT License  
-**Package**: Available on [NuGet](https://www.nuget.org/packages/WebDriverBiDi)
+**Package**: Available on [NuGet](https://www.nuget.org/packages/WebDriverBiDi-Relaxed)
