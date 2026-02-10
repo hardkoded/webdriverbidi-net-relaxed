@@ -9,7 +9,7 @@
     <AssemblyPublicKey>0024000004800000940000000602000000240000525341310004000001000100653f0e55fee55737bd9f9a5cbe93c4cceaf21e5c92f650e5f8fc36bbd9bd92917e97e28b05b2f6ca4d2947555fc8d239ff1631b7bdafa19f909d4281f4a59e15d1acabb4305350dd4b560bcede111e9e727912459392ed0c56d93fcd7f08cbe8cd1af0e039dfc7b5b0896c9b620eeba9228866533dd2bba630624e3d94fabfce</AssemblyPublicKey>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>WebDriverBiDi.snk</AssemblyOriginatorKeyFile>
-    <Version>0.0.40-beta.2</Version>
+    <Version>0.0.40-beta.3</Version>
   </PropertyGroup>
 
   <PropertyGroup>

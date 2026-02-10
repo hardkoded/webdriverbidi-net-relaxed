@@ -25,7 +25,9 @@ public class Transport
 
     private readonly JsonSerializerOptions options = new()
     {
-        TypeInfoResolver = new PrivateConstructorContractResolver(),
+        TypeInfoResolver = JsonSerializer.IsReflectionEnabledByDefault
+            ? new PrivateConstructorContractResolver()
+            : WebDriverBiDiJsonSerializerContext.Default,
     };
 
     private readonly Dictionary<string, Type> eventMessageTypes = [];
