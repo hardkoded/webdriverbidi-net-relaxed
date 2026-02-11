@@ -23,12 +23,18 @@ jobs:
           8.0.x
           9.0.x
           10.0.x
+    - name: Install Firefox Nightly
+      uses: browser-actions/setup-firefox@v1
+      with:
+        firefox-version: nightly
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal -p:CollectCoverage=true -p:CoverletOutputFormat=lcov -p:CoverletOutput=../coverage/lcov
+      env:
+        FIREFOX_EXECUTABLE: firefox
     - name: Upload code coverage
       uses: coverallsapp/github-action@master
       with:
