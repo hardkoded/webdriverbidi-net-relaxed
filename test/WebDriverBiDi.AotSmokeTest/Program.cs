@@ -3,146 +3,93 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 // </copyright>
 
-using System.Text.Json;
+using WebDriverBiDi;
 using WebDriverBiDi.BrowsingContext;
-using WebDriverBiDi.JsonConverters;
+using WebDriverBiDi.Client.Launchers;
 using WebDriverBiDi.Protocol;
 using WebDriverBiDi.Script;
 using WebDriverBiDi.Session;
 
-// Use the library-provided source-generated context as the type info resolver.
-// WebDriverBiDiJsonSerializerContext provides AOT-compatible metadata for all
-// serializable types and roots enum array types in its static constructor.
-var options = new JsonSerializerOptions
-{
-    TypeInfoResolver = WebDriverBiDiJsonSerializerContext.Default,
-};
+string firefoxPath = await FirefoxNightlyFetcher.GetFirefoxPathAsync();
+Console.WriteLine($"Firefox path: {firefoxPath}");
 
-int failures = 0;
+FirefoxLauncher launcher = new(firefoxPath);
+launcher.IsBrowserHeadless = true;
 
-// Test 1: CommandJsonConverter with NavigateCommandParameters
+BiDiDriver? driver = null;
 try
 {
-    var parameters = new NavigateCommandParameters("ctx-1", "https://example.com");
-    var command = new Command(1, parameters);
-    byte[] json = JsonSerializer.SerializeToUtf8Bytes(command, options);
-    using var doc = JsonDocument.Parse(json);
-    var root = doc.RootElement;
+    await launcher.StartAsync();
+    await launcher.LaunchBrowserAsync();
+    Console.WriteLine("Browser launched.");
 
-    bool pass = root.GetProperty("id").GetInt64() == 1
-        && root.GetProperty("method").GetString() == "browsingContext.navigate"
-        && root.GetProperty("params").GetProperty("context").GetString() == "ctx-1"
-        && root.GetProperty("params").GetProperty("url").GetString() == "https://example.com";
+    Transport transport = launcher.CreateTransport();
+    driver = new BiDiDriver(TimeSpan.FromSeconds(30), transport);
+    await driver.StartAsync(launcher.WebSocketUrl);
+    Console.WriteLine("BiDi connection established.");
 
-    Console.WriteLine(pass ? "PASS: CommandJsonConverter + NavigateCommandParameters" : "FAIL: CommandJsonConverter + NavigateCommandParameters");
-    if (!pass) failures++;
+    await driver.Session.NewSessionAsync(new NewCommandParameters());
+    Console.WriteLine("Session created.");
+
+    GetTreeCommandResult tree = await driver.BrowsingContext.GetTreeAsync(new GetTreeCommandParameters());
+    if (tree.ContextTree.Count == 0)
+    {
+        throw new InvalidOperationException("No browsing contexts found.");
+    }
+
+    string contextId = tree.ContextTree[0].BrowsingContextId;
+    Console.WriteLine($"Browsing context: {contextId}");
+
+    NavigateCommandParameters navigateParams = new(contextId, "https://github.com");
+    navigateParams.Wait = ReadinessState.Complete;
+    await driver.BrowsingContext.NavigateAsync(navigateParams);
+    Console.WriteLine("Navigation to github.com complete.");
+
+    EvaluateCommandParameters evalParams = new("document.title", new ContextTarget(contextId), true);
+    EvaluateResult evalResult = await driver.Script.EvaluateAsync(evalParams);
+
+    if (evalResult is not EvaluateResultSuccess success)
+    {
+        throw new InvalidOperationException($"Script evaluation failed: result type was {evalResult.ResultType}");
+    }
+
+    string? title = success.Result.ValueAs<string>();
+    Console.WriteLine($"Page title: {title}");
+
+    if (title is null || !title.Contains("GitHub", StringComparison.OrdinalIgnoreCase))
+    {
+        throw new InvalidOperationException($"Expected page title to contain 'GitHub', but got: '{title}'");
+    }
+
+    Console.WriteLine("PASS: Integration test succeeded — connected to Firefox, navigated to GitHub, verified page title.");
+    return 0;
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"FAIL: CommandJsonConverter + NavigateCommandParameters — {ex.GetType().Name}: {ex.Message}");
-    failures++;
+    Console.Error.WriteLine($"FAIL: {ex.GetType().Name}: {ex.Message}");
+    Console.Error.WriteLine(ex.StackTrace);
+    return 1;
 }
-
-// Test 2: ProxyConfigurationJsonConverter with ManualProxyConfiguration
-try
+finally
 {
-    var newParams = new NewCommandParameters();
-    newParams.Capabilities = new CapabilitiesRequest
+    if (driver is not null)
     {
-        AlwaysMatch = new CapabilityRequest
+        try
         {
-            Proxy = new ManualProxyConfiguration
-            {
-                HttpProxy = "proxy.example.com:8080",
-            },
-        },
-    };
-    var command = new Command(2, newParams);
-    byte[] json = JsonSerializer.SerializeToUtf8Bytes(command, options);
-    using var doc = JsonDocument.Parse(json);
-    var root = doc.RootElement;
+            await driver.StopAsync();
+        }
+        catch
+        {
+            // Best effort cleanup
+        }
+    }
 
-    var proxy = root.GetProperty("params")
-        .GetProperty("capabilities")
-        .GetProperty("alwaysMatch")
-        .GetProperty("proxy");
-
-    bool pass = root.GetProperty("method").GetString() == "session.new"
-        && proxy.GetProperty("proxyType").GetString() == "manual"
-        && proxy.GetProperty("httpProxy").GetString() == "proxy.example.com:8080";
-
-    Console.WriteLine(pass ? "PASS: ProxyConfigurationJsonConverter + ManualProxyConfiguration" : "FAIL: ProxyConfigurationJsonConverter + ManualProxyConfiguration");
-    if (!pass) failures++;
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"FAIL: ProxyConfigurationJsonConverter + ManualProxyConfiguration — {ex.GetType().Name}: {ex.Message}");
-    failures++;
-}
-
-// Test 3: ScriptTargetJsonConverter with RealmTarget and ContextTarget
-try
-{
-    var realmParams = new EvaluateCommandParameters("1+1", new RealmTarget("realm-1"), true);
-    var command3a = new Command(3, realmParams);
-    byte[] json3a = JsonSerializer.SerializeToUtf8Bytes(command3a, options);
-    using var doc3a = JsonDocument.Parse(json3a);
-    var target3a = doc3a.RootElement.GetProperty("params").GetProperty("target");
-
-    bool passRealm = target3a.GetProperty("realm").GetString() == "realm-1"
-        && !target3a.TryGetProperty("context", out _);
-
-    var contextParams = new EvaluateCommandParameters("2+2", new ContextTarget("ctx-2"), false);
-    var command3b = new Command(4, contextParams);
-    byte[] json3b = JsonSerializer.SerializeToUtf8Bytes(command3b, options);
-    using var doc3b = JsonDocument.Parse(json3b);
-    var target3b = doc3b.RootElement.GetProperty("params").GetProperty("target");
-
-    bool passContext = target3b.GetProperty("context").GetString() == "ctx-2"
-        && !target3b.TryGetProperty("realm", out _);
-
-    bool pass = passRealm && passContext;
-    Console.WriteLine(pass ? "PASS: ScriptTargetJsonConverter + RealmTarget/ContextTarget" : "FAIL: ScriptTargetJsonConverter + RealmTarget/ContextTarget");
-    if (!pass) failures++;
-}
-catch (Exception ex)
-{
-    Console.WriteLine($"FAIL: ScriptTargetJsonConverter + RealmTarget/ContextTarget — {ex.GetType().Name}: {ex.Message}");
-    failures++;
-}
-
-// Test 4: ConditionalNullPropertyJsonConverter<Viewport>
-try
-{
-    var viewportParams = new SetViewportCommandParameters
+    try
     {
-        BrowsingContextId = "ctx-3",
-        Viewport = new Viewport { Width = 1024, Height = 768 },
-    };
-    var command = new Command(5, viewportParams);
-    byte[] json = JsonSerializer.SerializeToUtf8Bytes(command, options);
-    using var doc = JsonDocument.Parse(json);
-    var vp = doc.RootElement.GetProperty("params").GetProperty("viewport");
-
-    bool pass = vp.GetProperty("width").GetUInt64() == 1024
-        && vp.GetProperty("height").GetUInt64() == 768;
-
-    Console.WriteLine(pass ? "PASS: ConditionalNullPropertyJsonConverter<Viewport>" : "FAIL: ConditionalNullPropertyJsonConverter<Viewport>");
-    if (!pass) failures++;
+        await launcher.QuitBrowserAsync();
+    }
+    catch
+    {
+        // Best effort cleanup
+    }
 }
-catch (Exception ex)
-{
-    Console.WriteLine($"FAIL: ConditionalNullPropertyJsonConverter<Viewport> — {ex.GetType().Name}: {ex.Message}");
-    failures++;
-}
-
-if (failures == 0)
-{
-    Console.WriteLine("ALL TESTS PASSED");
-}
-else
-{
-    Console.WriteLine($"{failures} TEST(S) FAILED");
-}
-
-return failures == 0 ? 0 : 1;
