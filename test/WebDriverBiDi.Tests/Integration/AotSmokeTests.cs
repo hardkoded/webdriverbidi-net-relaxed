@@ -15,21 +15,19 @@ public class AotSmokeTests
     private static readonly string SmokeTestProjectDir = Path.GetFullPath(
         Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "WebDriverBiDi.AotSmokeTest"));
 
-    [SetUp]
-    public void SkipIfNotCI()
+    private static string publishDir = string.Empty;
+    private static string executablePath = string.Empty;
+
+    [OneTimeSetUp]
+    public async Task PublishAotBinary()
     {
         if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
         {
             Assert.Ignore("Skipped outside CI. Set CI=true to run locally.");
         }
-    }
 
-    [Test]
-    public async Task AotSmokeTestPassesWithFirefox()
-    {
-        string publishDir = Path.Combine(SmokeTestProjectDir, "bin", "AotTestPublish");
+        publishDir = Path.Combine(SmokeTestProjectDir, "bin", "AotTestPublish");
 
-        // Publish the AOT smoke test as a native binary.
         int publishExit = await RunProcessAsync(
             "dotnet",
             $"publish \"{SmokeTestProjectDir}\" -c Release -o \"{publishDir}\"",
@@ -41,18 +39,32 @@ public class AotSmokeTests
         string executableName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
             ? "WebDriverBiDi.AotSmokeTest.exe"
             : "WebDriverBiDi.AotSmokeTest";
-        string executablePath = Path.Combine(publishDir, executableName);
+        executablePath = Path.Combine(publishDir, executableName);
 
         Assert.That(File.Exists(executablePath), Is.True, $"Published AOT executable not found at: {executablePath}");
+    }
 
-        // Run the published native binary.
+    [Test]
+    public async Task AotSmokeTestPassesWithFirefox()
+    {
+        await RunSmokeTestAsync("firefox");
+    }
+
+    [Test]
+    public async Task AotSmokeTestPassesWithChrome()
+    {
+        await RunSmokeTestAsync("chrome");
+    }
+
+    private static async Task RunSmokeTestAsync(string browserArg)
+    {
         int runExit = await RunProcessAsync(
             executablePath,
-            string.Empty,
+            browserArg,
             workingDirectory: publishDir,
             timeoutSeconds: 120);
 
-        Assert.That(runExit, Is.EqualTo(0), "AotSmokeTest process exited with non-zero exit code.");
+        Assert.That(runExit, Is.EqualTo(0), $"AotSmokeTest ({browserArg}) exited with non-zero exit code.");
     }
 
     private static async Task<int> RunProcessAsync(string fileName, string arguments, string workingDirectory, int timeoutSeconds)

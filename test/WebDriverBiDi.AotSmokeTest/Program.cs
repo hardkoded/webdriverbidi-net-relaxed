@@ -10,11 +10,36 @@ using WebDriverBiDi.Protocol;
 using WebDriverBiDi.Script;
 using WebDriverBiDi.Session;
 
-string firefoxPath = await FirefoxNightlyFetcher.GetFirefoxPathAsync();
-Console.WriteLine($"Firefox path: {firefoxPath}");
+string browser = args.Length > 0 ? args[0].ToLowerInvariant() : "firefox";
+Console.WriteLine($"Browser: {browser}");
 
-FirefoxLauncher launcher = new(firefoxPath);
-launcher.IsBrowserHeadless = true;
+BrowserLauncher launcher;
+switch (browser)
+{
+    case "firefox":
+        string firefoxPath = await FirefoxNightlyFetcher.GetFirefoxPathAsync();
+        Console.WriteLine($"Firefox path: {firefoxPath}");
+        FirefoxLauncher firefoxLauncher = new(firefoxPath);
+        firefoxLauncher.IsBrowserHeadless = true;
+        launcher = firefoxLauncher;
+        break;
+    case "chrome":
+        string chromePath = Environment.GetEnvironmentVariable("CHROME_EXECUTABLE") ?? string.Empty;
+        if (!string.IsNullOrEmpty(chromePath))
+        {
+            Console.WriteLine($"Chrome path (from env): {chromePath}");
+        }
+
+        ChromeLauncher chromeLauncher = string.IsNullOrEmpty(chromePath)
+            ? new ChromeLauncher()
+            : new ChromeLauncher(chromePath);
+        chromeLauncher.IsBrowserHeadless = true;
+        launcher = chromeLauncher;
+        break;
+    default:
+        Console.Error.WriteLine($"Unknown browser: {browser}. Use 'firefox' or 'chrome'.");
+        return 1;
+}
 
 BiDiDriver? driver = null;
 try
@@ -61,7 +86,7 @@ try
         throw new InvalidOperationException($"Expected page title to contain 'GitHub', but got: '{title}'");
     }
 
-    Console.WriteLine("PASS: Integration test succeeded — connected to Firefox, navigated to GitHub, verified page title.");
+    Console.WriteLine($"PASS: Integration test succeeded — connected to {browser}, navigated to GitHub, verified page title.");
     return 0;
 }
 catch (Exception ex)

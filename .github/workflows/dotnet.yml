@@ -36,6 +36,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal -p:CollectCoverage=true -p:CoverletOutputFormat=lcov -p:CoverletOutput=../coverage/lcov
       env:
         FIREFOX_EXECUTABLE: firefox
+        CHROME_EXECUTABLE: google-chrome-stable
     - name: Upload code coverage
       uses: coverallsapp/github-action@master
       with:
