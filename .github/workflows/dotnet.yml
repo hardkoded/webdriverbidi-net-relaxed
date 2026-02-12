@@ -24,9 +24,10 @@ jobs:
           9.0.x
           10.0.x
     - name: Install Firefox Nightly
-      uses: browser-actions/setup-firefox@v1
-      with:
-        firefox-version: nightly
+      run: |
+        wget -q "https://download.mozilla.org/?product=firefox-nightly-latest-ssl&os=linux64&lang=en-US" -O firefox-nightly.tar.bz2
+        tar xjf firefox-nightly.tar.bz2
+        echo "$PWD/firefox" >> $GITHUB_PATH
     - name: Restore dependencies
       run: dotnet restore
     - name: Build

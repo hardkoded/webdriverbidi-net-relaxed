@@ -15,6 +15,15 @@ public class AotSmokeTests
     private static readonly string SmokeTestProjectDir = Path.GetFullPath(
         Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "WebDriverBiDi.AotSmokeTest"));
 
+    [SetUp]
+    public void SkipIfNotCI()
+    {
+        if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable("CI")))
+        {
+            Assert.Ignore("Skipped outside CI. Set CI=true to run locally.");
+        }
+    }
+
     [Test]
     public async Task AotSmokeTestPassesWithFirefox()
     {
